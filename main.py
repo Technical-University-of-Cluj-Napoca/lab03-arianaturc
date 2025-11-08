@@ -1,8 +1,11 @@
 from utils import *
 from grid import Grid
-from searching_algorithms import *
+from ui import UI
+import pygame
 
 if __name__ == "__main__":
+
+    pygame.init()
     # setting up how big will be the display window
     WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 
@@ -11,7 +14,8 @@ if __name__ == "__main__":
 
     ROWS = 50  # number of rows
     COLS = 50  # number of columns
-    grid = Grid(WIN, ROWS, COLS, WIDTH, HEIGHT)
+    grid = Grid(WIN, ROWS, COLS, GRID_WIDTH, HEIGHT)
+    ui = UI(WIN, GRID_WIDTH, WIDTH, HEIGHT)
 
     start = None
     end = None
@@ -21,11 +25,52 @@ if __name__ == "__main__":
     started = False
 
     while run:
-        grid.draw()  # draw the grid and its spots
+
+        WIN.fill(COLORS['BACKGROUND'])
+        ui.draw_panel()
+
+        for row in grid.grid:
+            for spot in row:
+                spot.draw(WIN)
+        grid.draw_grid_lines()
+
+        pygame.display.update()
+
+        #grid.draw()  # draw the grid and its spots
         for event in pygame.event.get():
             # verify what events happened
             if event.type == pygame.QUIT:
                 run = False
+                continue
+
+            ui_action = ui.handle_events(event)
+
+            if ui_action["type"] == "reset":
+                start = None
+                end = None
+                grid.reset()
+                started = False
+                continue
+
+            if ui_action["type"] == "algorithm_selected":
+                algorithm = ui_action["algorithm"]
+                algo_param = ui_action["param"]
+
+                if not start or not end:
+                    continue
+
+                for row in grid.grid:
+                    for spot in row:
+                        spot.update_neighbors(grid.grid)
+
+                started = True
+                if algo_param is not None:
+                    algorithm(lambda: grid.draw(), grid, start, end, algo_param)
+                else:
+                    algorithm(lambda: grid.draw(), grid, start, end)
+                started = False
+                continue
+
 
             if started:
                 # do not allow any other interaction if the algorithm has started
@@ -50,31 +95,45 @@ if __name__ == "__main__":
 
             elif pygame.mouse.get_pressed()[2]:  # RIGHT CLICK
                 pos = pygame.mouse.get_pos()
-                row, col = grid.get_clicked_pos(pos)
-                spot = grid.grid[row][col]
-                spot.reset()
+                if ui.is_click_on_grid(pos):
+                    row, col = grid.get_clicked_pos(pos)
+                    if 0 <= row < ROWS and 0 <= col < COLS:
+                        spot = grid.grid[row][col]
+                        spot.reset()
+                        if spot == start:
+                            start = None
+                        elif spot == end:
+                            end = None
 
-                if spot == start:
-                    start = None
-                elif spot == end:
-                    end = None
+
+
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE and not started:
+                if event.key == pygame.K_c:
+                    start = None
+                    end = None
+                    grid.reset()
+                    started = False
+
+                '''if event.key == pygame.K_SPACE and not started:
                     # run the algorithm
                     for row in grid.grid:
                         for spot in row:
                             spot.update_neighbors(grid.grid)
                     # here you can call the algorithms
-                    # bfs(lambda: grid.draw(), grid, start, end)
-                    # dfs(lambda: grid.draw(), grid, start, end)
-                    # astar(lambda: grid.draw(), grid, start, end)
-                    # ... and the others?
+                    #bfs(lambda: grid.draw(), grid, start, end)
+                    #dfs(lambda: grid.draw(), grid, start, end)
+                    #astar(lambda: grid.draw(), grid, start, end)
+                    #dls(lambda: grid.draw(), grid, start, end, 1000)
+                    #ucs(lambda: grid.draw(), grid, start, end)
+                    #dijkstra(lambda: grid.draw(), grid, start, end)
+                    #iddfs(lambda: grid.draw(), grid, start, end, 1000)
+                    #ida(lambda: grid.draw(), grid, start, end)
                     started = False
 
                 if event.key == pygame.K_c:
                     print("Clearing the grid...")
                     start = None
                     end = None
-                    grid.reset()
+                    grid.reset()'''
     pygame.quit()
