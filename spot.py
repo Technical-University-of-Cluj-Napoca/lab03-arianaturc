@@ -21,7 +21,7 @@ class Spot:
         self.height: int = height
         self.x: int = row * width
         self.y: int = col * height
-        self.color: tuple = COLORS["WHITE"]  # default color is white
+        self.color: tuple = COLORS["BACKGROUND"]  # default color is white
         self.neighbors: list = []
         self.total_rows: int = total_rows
 
@@ -81,7 +81,7 @@ class Spot:
         Returns:
             None
         """
-        self.color = COLORS['WHITE']
+        self.color = COLORS['BACKGROUND']
 
     def make_closed(self) -> None:
         """
